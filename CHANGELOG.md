@@ -1,3 +1,15 @@
+# [5.3.0](https://github.com/dhis2/cli/compare/v5.2.1...v5.3.0) (2026-01-07)
+
+
+### Bug Fixes
+
+* rerun pipeline ([3e79615](https://github.com/dhis2/cli/commit/3e79615cbe378fa77e3bd84c01c661b859c06802))
+
+
+### Features
+
+* add new templates and options to @dhis2/create-app ([#635](https://github.com/dhis2/cli/issues/635)) ([8abeed6](https://github.com/dhis2/cli/commit/8abeed64ee3ef14939c24cab6272c212608460b6))
+
 # [5.3.0-alpha.8](https://github.com/dhis2/cli/compare/v5.3.0-alpha.7...v5.3.0-alpha.8) (2026-01-07)
 
 
