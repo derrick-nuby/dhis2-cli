@@ -1,3 +1,10 @@
+## [5.3.1](https://github.com/dhis2/cli/compare/v5.3.0...v5.3.1) (2026-01-27)
+
+
+### Bug Fixes
+
+* **LIBS-801:** bump cli-app-scripts version in default templates ([5fa8906](https://github.com/dhis2/cli/commit/5fa8906cb776d01073fb01798c1c237c8d43413b))
+
 # [5.3.0](https://github.com/dhis2/cli/compare/v5.2.1...v5.3.0) (2026-01-07)
 
 
