@@ -5,6 +5,7 @@ const { input, select } = require('@inquirer/prompts')
 const fg = require('fast-glob')
 const fs = require('fs-extra')
 const { default: getPackageManager } = require('./utils/getPackageManager')
+const resolveTemplateSource = require('./utils/resolveTemplateSource')
 
 process.on('uncaughtException', (error) => {
     if (error instanceof Error && error.name === 'ExitPromptError') {
@@ -45,7 +46,8 @@ const commandHandler = {
             alias: ['ts', 'typeScript'],
         },
         template: {
-            description: 'Which template to use (Basic, With React Router)',
+            description:
+                'Which template to use (Basic, With React Router, or GitHub template specifier)',
             type: 'string',
         },
         packageManager: {
@@ -56,7 +58,7 @@ const commandHandler = {
     },
 }
 
-const getTemplateDirectory = (templateName) => {
+const getBuiltInTemplateDirectory = (templateName) => {
     return templateName === 'react-router'
         ? templates.templateWithReactRouter
         : templates.templateWithList
@@ -86,7 +88,7 @@ const command = {
             typeScript: argv.typescript ?? true,
             packageManager:
                 argv.packageManager ?? getPackageManager() ?? 'pnpm',
-            templateName: argv.template ?? 'basic',
+            templateSource: argv.template ?? 'basic',
         }
 
         if (!useDefauls) {
@@ -106,17 +108,29 @@ const command = {
             if (argv.template === undefined) {
                 const template = await select({
                     message: 'Select a template',
-                    default: 'ts',
+                    default: 'basic',
                     choices: [
                         { name: 'Basic Template', value: 'basic' },
                         {
                             name: 'Template with React Router',
                             value: 'react-router',
                         },
+                        {
+                            name: 'Custom template from Git',
+                            value: 'custom-git',
+                        },
                     ],
                 })
 
-                selectedOptions.templateName = template
+                if (template === 'custom-git') {
+                    selectedOptions.templateSource = await input({
+                        message:
+                            'Enter GitHub template specifier (e.g. owner/repo#main:templates/my-template)',
+                        required: true,
+                    })
+                } else {
+                    selectedOptions.templateSource = template
+                }
             }
         }
 
@@ -158,8 +172,27 @@ const command = {
         }
 
         reporter.info('Copying template files')
-        const templateFiles = getTemplateDirectory(selectedOptions.templateName)
-        fs.copySync(templateFiles, cwd)
+        const builtInTemplateMap = {
+            basic: getBuiltInTemplateDirectory('basic'),
+            'react-router': getBuiltInTemplateDirectory('react-router'),
+        }
+        let resolvedTemplate
+        try {
+            resolvedTemplate = await resolveTemplateSource(
+                selectedOptions.templateSource,
+                builtInTemplateMap
+            )
+            fs.copySync(resolvedTemplate.templatePath, cwd)
+        } catch (error) {
+            reporter.error(
+                error instanceof Error ? error.message : String(error)
+            )
+            process.exit(1)
+        } finally {
+            if (resolvedTemplate) {
+                await resolvedTemplate.cleanup()
+            }
+        }
 
         const paths = {
             base: cwd,
