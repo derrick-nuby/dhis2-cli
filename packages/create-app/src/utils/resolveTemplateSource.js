@@ -1,6 +1,6 @@
-const { execSync } = require('child_process')
-const os = require('os')
-const path = require('path')
+const { execSync } = require('node:child_process')
+const os = require('node:os')
+const path = require('node:path')
 const fs = require('fs-extra')
 const {
     isGitTemplateSpecifier,
