@@ -1,4 +1,4 @@
-import path from 'path'
+import path from 'node:path'
 import { defineConfig, ConfigEnv } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 
