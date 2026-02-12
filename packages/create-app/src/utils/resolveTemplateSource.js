@@ -1,6 +1,6 @@
-const { execSync } = require('node:child_process')
 const os = require('node:os')
 const path = require('node:path')
+const { exec } = require('@dhis2/cli-helpers-engine')
 const fs = require('fs-extra')
 const {
     isGitTemplateSpecifier,
@@ -72,9 +72,8 @@ const resolveTemplateSource = async (templateSource, builtInTemplateMap) => {
     const clonedRepoPath = path.join(tempBase, 'repo')
 
     try {
-        const cloneArgs = parsedSpecifier.ref
+        const gitCloneArgs = parsedSpecifier.ref
             ? [
-                  'git',
                   'clone',
                   '--depth',
                   '1',
@@ -84,14 +83,17 @@ const resolveTemplateSource = async (templateSource, builtInTemplateMap) => {
                   clonedRepoPath,
               ]
             : [
-                  'git',
                   'clone',
                   '--depth',
                   '1',
                   parsedSpecifier.repoUrl,
                   clonedRepoPath,
               ]
-        execSync(cloneArgs.join(' '), { stdio: 'ignore' })
+        await exec({
+            cmd: 'git',
+            args: gitCloneArgs,
+            pipe: false,
+        })
 
         const resolvedTemplatePath = resolveSubdirectory(
             clonedRepoPath,
