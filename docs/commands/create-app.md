@@ -65,9 +65,6 @@ pnpm create @dhis2/app my-app --template owner/repo
 # use a custom template from GitHub with a branch/tag/commit
 pnpm create @dhis2/app my-app --template owner/repo#main
 
-# use a custom template from GitHub with branch + subdirectory
-pnpm create @dhis2/app my-app --template owner/repo#main:templates/app-template
-
 # use a full GitHub URL
 pnpm create @dhis2/app my-app --template https://github.com/owner/repo
 

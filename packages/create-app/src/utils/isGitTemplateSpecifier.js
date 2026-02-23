@@ -1,32 +1,22 @@
 const githubHosts = new Set(['github.com', 'www.github.com'])
-const shorthandPattern = /^([a-zA-Z0-9_.-]+)\/([^\s/]+)$/
+const ownerPattern = /^[a-zA-Z0-9_.-]+$/
 
-const parseRefAndSubdir = (rawTemplateSource, refAndSubdir) => {
-    if (refAndSubdir === undefined) {
-        return { ref: null, subdir: null }
+const parseRef = (rawTemplateSource, refPart) => {
+    if (refPart === undefined) {
+        return null
     }
-    if (!refAndSubdir) {
+    if (!refPart) {
         throw new Error(
             `Invalid template source "${rawTemplateSource}". Ref cannot be empty after "#".`
         )
     }
-
-    const [parsedRef, ...subdirParts] = refAndSubdir.split(':')
-    const ref = parsedRef || null
-    const subdir = subdirParts.length > 0 ? subdirParts.join(':') : null
-
-    if (!ref) {
+    if (refPart.includes(':')) {
         throw new Error(
-            `Invalid template source "${rawTemplateSource}". Ref cannot be empty after "#".`
-        )
-    }
-    if (subdir !== null && !subdir.trim()) {
-        throw new Error(
-            `Invalid template source "${rawTemplateSource}". Subdirectory cannot be empty after ":".`
+            `Invalid template source "${rawTemplateSource}". Use "owner/repo" or "owner/repo#ref".`
         )
     }
 
-    return { ref, subdir }
+    return refPart
 }
 
 const parseGithubUrlSource = (sourceWithoutRef) => {
@@ -51,16 +41,32 @@ const parseGithubUrlSource = (sourceWithoutRef) => {
 }
 
 const parseGithubShorthandSource = (rawTemplateSource, sourceWithoutRef) => {
-    const match = sourceWithoutRef.match(shorthandPattern)
-    if (!match) {
+    const separatorIndex = sourceWithoutRef.indexOf('/')
+    const hasSingleSeparator =
+        separatorIndex > 0 &&
+        separatorIndex === sourceWithoutRef.lastIndexOf('/')
+    if (!hasSingleSeparator) {
         throw new Error(
-            `Invalid template source "${rawTemplateSource}". Use "owner/repo", "owner/repo#ref", or "owner/repo#ref:subdir".`
+            `Invalid template source "${rawTemplateSource}". Use "owner/repo" or "owner/repo#ref".`
+        )
+    }
+
+    const owner = sourceWithoutRef.slice(0, separatorIndex)
+    const repo = sourceWithoutRef.slice(separatorIndex + 1)
+    if (
+        !ownerPattern.test(owner) ||
+        !repo ||
+        /\s/.test(repo) ||
+        repo.includes('/')
+    ) {
+        throw new Error(
+            `Invalid template source "${rawTemplateSource}". Use "owner/repo" or "owner/repo#ref".`
         )
     }
 
     return {
-        owner: match[1],
-        repo: match[2],
+        owner,
+        repo,
     }
 }
 
@@ -70,15 +76,14 @@ const parseGitTemplateSpecifier = (templateSource) => {
         throw new Error('Template source cannot be empty.')
     }
 
-    const [sourceWithoutRef, refAndSubdir, ...rest] =
-        rawTemplateSource.split('#')
+    const [sourceWithoutRef, refPart, ...rest] = rawTemplateSource.split('#')
     if (rest.length > 0) {
         throw new Error(
             `Invalid template source "${rawTemplateSource}". Use at most one "#" to specify a ref.`
         )
     }
 
-    const { ref, subdir } = parseRefAndSubdir(rawTemplateSource, refAndSubdir)
+    const ref = parseRef(rawTemplateSource, refPart)
     const sourceInfo = sourceWithoutRef.startsWith('https://')
         ? parseGithubUrlSource(sourceWithoutRef)
         : parseGithubShorthandSource(rawTemplateSource, sourceWithoutRef)
@@ -100,7 +105,6 @@ const parseGitTemplateSpecifier = (templateSource) => {
         owner,
         repo,
         ref,
-        subdir,
         repoUrl: `https://github.com/${owner}/${repo}.git`,
         raw: rawTemplateSource,
     }
@@ -116,7 +120,12 @@ const isGitTemplateSpecifier = (templateSource) => {
         return true
     }
 
-    return /^[a-zA-Z0-9_.-]+\/[^\s/]+(?:#.+)?$/.test(rawTemplateSource)
+    try {
+        parseGitTemplateSpecifier(rawTemplateSource)
+        return true
+    } catch (_error) {
+        return false
+    }
 }
 
 module.exports = {

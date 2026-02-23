@@ -5,7 +5,7 @@ const { input, select } = require('@inquirer/prompts')
 const fg = require('fast-glob')
 const fs = require('fs-extra')
 const { default: getPackageManager } = require('./utils/getPackageManager')
-const resolveTemplateSource = require('./utils/resolveTemplateSource')
+const resolveExternalTemplateSource = require('./utils/resolveExternalTemplateSource')
 
 process.on('uncaughtException', (error) => {
     if (error instanceof Error && error.name === 'ExitPromptError') {
@@ -59,9 +59,15 @@ const commandHandler = {
 }
 
 const getBuiltInTemplateDirectory = (templateName) => {
-    return templateName === 'react-router'
-        ? templates.templateWithReactRouter
-        : templates.templateWithList
+    if (templateName === 'basic') {
+        return templates.templateWithList
+    }
+
+    if (templateName === 'react-router') {
+        return templates.templateWithReactRouter
+    }
+
+    return null
 }
 
 const command = {
@@ -125,7 +131,7 @@ const command = {
                 if (template === 'custom-git') {
                     selectedOptions.templateSource = await input({
                         message:
-                            'Enter GitHub template specifier (e.g. owner/repo#main:templates/my-template)',
+                            'Enter GitHub template specifier (e.g. owner/repo#main)',
                         required: true,
                     })
                 } else {
@@ -172,25 +178,28 @@ const command = {
         }
 
         reporter.info('Copying template files')
-        const builtInTemplateMap = {
-            basic: getBuiltInTemplateDirectory('basic'),
-            'react-router': getBuiltInTemplateDirectory('react-router'),
-        }
-        let resolvedTemplate
+        let resolvedExternalTemplate
         try {
-            resolvedTemplate = await resolveTemplateSource(
-                selectedOptions.templateSource,
-                builtInTemplateMap
+            const builtInTemplatePath = getBuiltInTemplateDirectory(
+                selectedOptions.templateSource
             )
-            fs.copySync(resolvedTemplate.templatePath, cwd)
+
+            if (builtInTemplatePath) {
+                fs.copySync(builtInTemplatePath, cwd)
+            } else {
+                resolvedExternalTemplate = await resolveExternalTemplateSource(
+                    selectedOptions.templateSource
+                )
+                fs.copySync(resolvedExternalTemplate.templatePath, cwd)
+            }
         } catch (error) {
             reporter.error(
                 error instanceof Error ? error.message : String(error)
             )
             process.exit(1)
         } finally {
-            if (resolvedTemplate) {
-                await resolvedTemplate.cleanup()
+            if (resolvedExternalTemplate) {
+                await resolvedExternalTemplate.cleanup()
             }
         }
 
