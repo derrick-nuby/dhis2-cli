@@ -70,6 +70,34 @@ const parseGithubShorthandSource = (rawTemplateSource, sourceWithoutRef) => {
     }
 }
 
+const isValidRefPart = (refPart) => {
+    if (refPart === undefined) {
+        return true
+    }
+
+    return Boolean(refPart) && !refPart.includes(':')
+}
+
+const isValidShorthandSource = (sourceWithoutRef) => {
+    const separatorIndex = sourceWithoutRef.indexOf('/')
+    const hasSingleSeparator =
+        separatorIndex > 0 &&
+        separatorIndex === sourceWithoutRef.lastIndexOf('/')
+    if (!hasSingleSeparator) {
+        return false
+    }
+
+    const owner = sourceWithoutRef.slice(0, separatorIndex)
+    const repo = sourceWithoutRef.slice(separatorIndex + 1)
+
+    return (
+        ownerPattern.test(owner) &&
+        Boolean(repo) &&
+        !/\s/.test(repo) &&
+        !repo.includes('/')
+    )
+}
+
 const parseGitTemplateSpecifier = (templateSource) => {
     const rawTemplateSource = String(templateSource || '').trim()
     if (!rawTemplateSource) {
@@ -120,12 +148,12 @@ const isGitTemplateSpecifier = (templateSource) => {
         return true
     }
 
-    try {
-        parseGitTemplateSpecifier(rawTemplateSource)
-        return true
-    } catch (_error) {
+    const [sourceWithoutRef, refPart, ...rest] = rawTemplateSource.split('#')
+    if (rest.length > 0 || !isValidRefPart(refPart)) {
         return false
     }
+
+    return isValidShorthandSource(sourceWithoutRef)
 }
 
 module.exports = {
