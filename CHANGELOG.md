@@ -1,3 +1,10 @@
+# [5.4.0](https://github.com/dhis2/cli/compare/v5.3.1...v5.4.0) (2026-02-24)
+
+
+### Features
+
+* **create-app:** add custom template support via GitHub template sources  ([#641](https://github.com/dhis2/cli/issues/641)) ([bb7ad85](https://github.com/dhis2/cli/commit/bb7ad8513a822f240e459eea84ee4dc5010a6682))
+
 ## [5.3.1](https://github.com/dhis2/cli/compare/v5.3.0...v5.3.1) (2026-01-27)
 
 
