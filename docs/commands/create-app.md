@@ -42,7 +42,8 @@ You can run `pnpm create @dhis2/app@alpha --help` for the list of options availa
                                             template) [boolean] [default: false]
   --typescript, --ts, --typeScript          Use TypeScript or JS       [boolean]
   --template                                Which template to use (Basic, With
-                                            React Router)               [string]
+                                            React Router, or GitHub
+                                            template specifier)         [string]
   --packageManager, --package,              Package Manager
   --packagemanager                                                      [string]
 ```
@@ -57,6 +58,15 @@ pnpm create @dhis2/app my-app --yes
 
 # use the default settings but override the template
 pnpm create @dhis2/app my-app --yes --template react-router
+
+# use a custom template from GitHub (owner/repo)
+pnpm create @dhis2/app my-app --template owner/repo
+
+# use a custom template from GitHub with a branch/tag/commit
+pnpm create @dhis2/app my-app --template owner/repo#main
+
+# use a full GitHub URL
+pnpm create @dhis2/app my-app --template https://github.com/owner/repo
 
 # use yarn as a package manager (and prompt for other settings)
 pnpm create @dhis2/app my-app --packageManager yarn
